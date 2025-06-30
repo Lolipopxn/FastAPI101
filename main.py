@@ -1,57 +1,16 @@
 from typing import Union, List
 
-from sqlalchemy import create_engine, Column, Integer, String, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
 
-DATABASE_URL = "sqlite:///./sql_app.db"
-
-# Step 1 ตั้งค่าและเชื่อมต่อกับฐานข้อมูล SQLite
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-#step 2: ORM class
-class Item(Base):
-    __tablename__ = "items"
-
-    id = Column(Integer, primary_key=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    price = Column(Float)
+from .database import engine, Base, get_db
+from .schema import ItemCreated, ItemResponse
+from .models import Item
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-#Step 3: Pydantic Model
-
-#1 - Base
-class ItemBase(BaseModel):
-    title: str
-    description: str
-    price: float
-
-#2 - Request
-class ItemCreated(ItemBase):
-    pass
-
-#3 - Response
-class ItemResponse(ItemBase):
-    id: int
-    class Config:
-        from_attributes = True
-
-#Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @app.get("/items", response_model=List[ItemResponse])
 def readAll_item(db: Session = Depends(get_db)):
