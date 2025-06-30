@@ -1,6 +1,6 @@
 from typing import Union
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -9,10 +9,21 @@ from pydantic import BaseModel
 
 DATABASE_URL = "sqlite:///./sql_app.db"
 
-# ตั้งค่าและเชื่อมต่อกับฐานข้อมูล SQLite
+# Step 1 ตั้งค่าและเชื่อมต่อกับฐานข้อมูล SQLite
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+#step 2: ORM class
+class ItemDB(Base):
+    __tablename__ = "items"
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, Index=True)
+    description = Column(String, nullable=True)
+    price = Column(Integer)
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
